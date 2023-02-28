@@ -1,0 +1,183 @@
+# Survival Analysis in R
+
+
+#Just run the next line for the first time.
+install.packages("survival")
+library(survival)
+library(survminer)
+library(SurvRegCensCov)
+mydata<- read.csv("C:/Users/Mahdieh/Documents/Updated Second Hazards Bahar.txt")
+attach(mydata)
+
+# Define variables 
+time <- TimeInterval
+event <- Event
+X <- cbind(SumOfWarningPrice ,VehiclePrice ,PlateType ,WeekdayCode ,SchoolHoliday ,PeakHour ,DeliveryType ,ViolationPlace ,ViolationCity ,TempHourly ,PrecHourly ,TempDaily ,PrecDaily ,TempDailyMin ,TempDailyMax )
+PlateType = factor(PlateType, c("10", "3", "11", "4", "6"))
+levels(PlateType)
+WeekdayCode = factor(WeekdayCode, C("1", "2", "3"))
+WeekdayCode <- as.factor(WeekdayCode)
+levels(WeekdayCode)
+group <- SumOfWarningPrice
+
+
+WeekdayCode <- as.factor(WeekdayCode)
+SchoolHoliday <- as.factor(SchoolHoliday)
+PlateType <- as.factor(PlateType)
+PeakHour <- as.factor(PeakHour)
+DeliveryType <- as.factor(DeliveryType)
+ViolationPlace <- as.factor(ViolationPlace)
+Nationality <- as.factor(Nationality)
+DTempStatus <- as.factor(DTempStatus)
+HTempStatus <- as.factor(HTempStatus)
+DPrecStatus <- as.factor(DPrecStatus)
+HPrecStatus <- as.factor(HPrecStatus)
+
+coxph8 <- coxph(Surv(time,event) ~ VP + PlateType + WeekdayCode + SchoolHoliday + PeakHour + ViolationPlace + Nationality + HTempStatus + HPrecStatus, method="breslow")
+summary(coxph8)
+AIC(coxph)
+print(summary)
+
+test.ph <- cox.zph(coxph8)
+test.ph
+
+ggcoxzph(test.ph)
+
+
+
+# Descriptive statistics
+summary(time)
+summary(event)
+summary(X)
+summary(group)
+
+
+kmsurvival2 <- survfit(Surv(time, event) ~ PlateType)
+plot(kmsurvival2, labels=c("taxi", "Shakhsi", "pub", "jun","gov"), xlab="Time", ylab="Survival Probability")
+ggsurvplot(kmsurvival2, data=mydata,
+           conf.int = TRUE,
+           linetype = "strata",
+           ggtheme = theme_bw(), xlab="Time", ylab="Survival Probability")
+
+kmsurvival3 <- survfit(Surv(time, event) ~ WeekdayCode)
+ggsurvplot(kmsurvival3, data=mydata,
+           conf.int = TRUE,
+           linetype = "strata",
+           ggtheme = theme_bw(), xlab="Time", ylab="Survival Probability")
+
+kmsurvival4 <- survfit(Surv(time, event) ~ HTempStatus)
+ggsurvplot(kmsurvival4, data=mydata,
+           conf.int = TRUE,
+           linetype = "strata",
+           ggtheme = theme_bw(), xlab="Time", ylab="Survival Probability")
+
+
+kmsurvival5 <- survfit(Surv(time, event) ~ HPrecStatus)
+ggsurvplot(kmsurvival5, data=mydata,
+           conf.int = TRUE,
+           linetype = "strata",
+           ggtheme = theme_bw(), xlab="Time", ylab="Survival Probability")
+
+kmsurvival3 <- survfit(Surv(time, event) ~ Nationality)
+ggsurvplot(kmsurvival3, data=mydata,
+           conf.int = TRUE,
+           linetype = "strata",
+           ggtheme = theme_bw(), xlab="Time", ylab="Survival Probability")
+
+kmsurvival4 <- survfit(Surv(time, event) ~ SchoolHoliday)
+ggsurvplot(kmsurvival4, data=mydata,
+           conf.int = TRUE,
+           linetype = "strata",
+           ggtheme = theme_bw(), xlab="Time", ylab="Survival Probability")
+
+
+# Kaplan-Meier non-parametric analysis
+kmsurvival <- survfit(Surv(time,event) ~ 1)
+#summary(kmsurvival)
+plot(kmsurvival, xlab="Time", ylab="Survival Probability")
+
+# Kaplan-Meier non-parametric analysis by group
+kmsurvival1 <- survfit(Surv(time, event) ~ group)
+#summary(kmsurvival1)
+plot(kmsurvival1, xlab="Time", ylab="Survival Probability")
+
+# Nelson-Aalen non-parametric analysis
+nasurvival <- survfit(coxph(Surv(time,event)~1), type="aalen")
+#summary(nasurvival)
+plot(nasurvival, xlab="Time", ylab="Survival Probability")
+
+
+# Cox proportional hazard model - coefficients and hazard rates
+coxph <- coxph(Surv(time,event) ~ X, method="breslow")
+summary(coxph)
+
+# Exponential, Weibull, and log-logistic parametric model coefficients
+# Opposite signs from Stata results, Weibull results differ; same as SAS
+exponential <- survreg(Surv(time,event) ~ VP + PlateType + WeekdayCode + SchoolHoliday + PeakHour + ViolationPlace + Nationality + HTempStatus + HPrecStatus, dist="exponential")
+summary(exponential)
+AIC(exponential) 
+
+weibull <- survreg(Surv(time,event) ~ VP + PlateType + WeekdayCode + SchoolHoliday + PeakHour + ViolationPlace + Nationality + HTempStatus + HPrecStatus + EBLAGH, dist="weibull")
+summary(weibull)
+AIC(weibull)
+library(SurvRegCensCov)
+ConvertWeibull(weibull)
+
+
+weibull1 <- survreg(Surv(time,event) ~ VP + WeekdayCode + SchoolHoliday + PeakHour + ViolationPlace + Nationality + HTempStatus + HPrecStatus + EBLAGH, dist="weibull")
+summary(weibull)
+ConvertWeibull(weibull1)
+AIC(weibull1)
+
+weibull2 <- survreg(Surv(time,event) ~ VP + PlateType + WeekdayCode + SchoolHoliday + PeakHour + ViolationPlace + Nationality + HTempStatus + HPrecStatus, dist="weibull")
+summary(weibull2)
+ConvertWeibull(weibull2)
+AIC(weibull2)
+
+
+
+weibull3 <- survreg(Surv(time,event) ~ VP + PlateType + WeekdayCode + SchoolHoliday + ViolationPlace + Nationality + HTempStatus + HPrecStatus, dist="weibull")
+summary(weibull3)
+ConvertWeibull(weibull3)
+AIC(weibull2)
+AIC(weibull2)
+
+wei1 <- WeibullReg(Surv(time,event)~ VP + PlateType + WeekdayCode + SchoolHoliday + PeakHour + ViolationPlace + Nationality + HTempStatus + HPrecStatus)
+summary(wei1)
+
+plot(coxph5, resid=TRUE, se=TRUE, df=4, nsmo=40, PeakHour,
+     xlab="Time", ylab, lty=1:2, col=1, lwd=1, ...)
+
+library(ggplot2)
+gg_scaledsch(coxph5, transform = "km")
+res.cox <- coxph(Surv(time, status) ~ VP + PlateType + WeekdayCode + SchoolHoliday + PeakHour + ViolationPlace + Nationality + HTempStatus + HPrecStatus, data = mydat)
+res.cox
+cox.zph(coxph5)
+
+install.packages("eha")
+library(eha)
+wei.alt <- weibreg(Surv(time,event)~ VP + PlateType + WeekdayCode + SchoolHoliday + PeakHour + ViolationPlace + Nationality + HTempStatus + HPrecStatus)
+wei.alt
+
+par(mfrow=c(2,2))
+plot(wei.alt, fn=c("sur") ,mydata=c(2,23.00,10,1,0,0,1,1,1,0))
+install.packages("PSM")
+library(psm)
+psm.viol <- psm(Surv(time,event)~ VP + PlateType + WeekdayCode + SchoolHoliday + PeakHour + ViolationPlace + Nationality + HTempStatus + HPrecStatus, dist='weibull')
+
+
+weibulln <- survreg(Surv(time,event) ~ PlateType, dist="weibull")
+summary(weibulln)
+ConvertWeibull(weibulln)
+
+coxph5 <- coxph(Surv(time,event) ~ VP + PlateType + WeekdayCode + SchoolHoliday + PeakHour + ViolationPlace + Nationality + HTempStatus + HPrecStatus, method="breslow")
+summary(coxph5)
+AIC(coxph5)
+
+loglogistic <- survreg(Surv(time,event) ~ VP + PlateType + WeekdayCode + SchoolHoliday + PeakHour + ViolationPlace + Nationality + HTempStatus + HPrecStatus, dist="loglogistic")
+summary(loglogistic)
+AIC(loglogistic)
+
+Weibull1 <- survreg( Surv(time, event)~1, data=mydata, dist='weibull')
+plot(survfit(Surv(time,event),data=mydata))
+curve(exp(-(exp(-Weibull1$coef[1])*x)^(1/Weibull1$scale)),col="red",add=T)
